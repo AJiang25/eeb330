@@ -1,0 +1,122 @@
+This file represents the code to replicate Figure 2 in Paper 1 of Natural Recovery of Corals after Severe Disturbance 
+by Juliano Morais, Sterling B. Tebbett, Renato A. Morais, David R. Bellwood
+
+# Figure 2A:
+
+```{r}
+library(ggplot2)
+library(ggpubr)
+
+# Reads in all the files
+data2a <- read.csv(file = "Data_Fig2a.csv", header = TRUE,  sep = ",")
+data2a
+
+data2b <- read.csv(file = "Data_Fig2b.csv", header = TRUE,  sep = ",")
+data2b
+
+data2cover <- read.csv(file = "Data_Fig2_Cover_Diff.csv", header = TRUE,  sep = ",")
+
+
+```
+
+```{r}
+# Plot for figure 2a
+plot2a <- ggplot(data2a) +
+   geom_ribbon(
+      aes(
+         x = n_recruit, 
+         ymin = lower.HPD, 
+         ymax = upper.HPD
+         ), 
+      fill = "#CADAE0"
+   ) +
+   geom_line(aes(x = n_recruit, y = emmean)) +
+   geom_point(data = data2cover, aes(x = n_recruit, y = Diff_cover), size = 3) + 
+   labs(
+      x = expression(Density~of~recruits~(recruits/m^2)),
+      y = "Increase in % cover over 24 months"
+   ) + 
+   scale_x_continuous(breaks = c(5, 11.5, 15, 20, 25)) +
+   scale_y_continuous(breaks = c(0, 25, 40, 60)) +
+   geom_hline(yintercept = 25, linetype = 2) +
+   geom_segment(x = 11.5, xend = 11.5, y = -5, yend = 25, linetype = 2) + 
+   theme_classic() +
+   theme(
+      aspect.ratio = 1
+   ) +
+   annotate("text", x = 22, y = 6, label = expression(mR^2~"= 0.78")) +
+   annotate("text", x = 22, y = 4, label = expression(cR^2~"= 0.80"))
+
+plot2a
+
+
+```
+
+```{r}
+# Plot for figure 2b
+plot2b <- ggplot(data2b) +
+   geom_ribbon(
+      aes(
+         x = Month,
+         ymin = CoverNew - se,
+         ymax = CoverNew + se,
+         group = Density_cate,
+         fill = rev(Density_cate)
+      ),
+      alpha = 0.5
+   ) +
+   geom_line(
+      aes(
+         x = Month, 
+         y = CoverNew, 
+         group = Density_cate, 
+         color = rev(Density_cate),
+      ), 
+      size = 2
+   ) + 
+   guides(
+      color = guide_legend(reverse=TRUE),
+      fill = guide_legend(reverse=TRUE)
+   ) +
+   labs(
+      x = "Months",
+      y = "Coral Cover (%)",
+   ) +
+   scale_color_discrete(
+      name = element_blank(),
+      labels = c(
+         expression(Less~than~11~recruits/m^2), 
+         expression(More~than~11~recruits/m^2)
+      )
+   ) +
+   scale_fill_discrete(
+      name = element_blank(),
+      labels = c(
+         expression(Less~than~11~recruits/m^2), 
+         expression(More~than~11~recruits/m^2)
+      )
+   ) +
+   scale_x_continuous(breaks = c(0, 6, 12, 18, 24)) +
+   scale_y_continuous(breaks = c(0, 10, 20, 30, 40)) +
+   geom_hline(yintercept = 25, linetype = 2) +
+   theme_classic() +
+   theme(
+      aspect.ratio = 1,
+      legend.position = c(0.15, 0.875)
+   ) +
+   annotate("text", x = 3, y = 26, label = "Global average coral cover (25%)")
+
+plot2b
+```
+
+```{r}
+# puts the plots together
+ggarrange(plot2a,                                               
+          plot2b, 
+          nrow = 2,
+          hjust = -5,
+          labels = c("(a)", "(b)")                     
+          ) 
+
+
+```

@@ -1,0 +1,108 @@
+## Exercises
+
+### 1. Conditionals
+
+Consider the vector:
+
+```{r}
+grades <- c(85, 77, 90, 65, 89, 72, 91, 68, 80)
+```
+
+```{r}
+# Creates an empty vector called grade_tags
+grade_tags <- c()
+
+# Initializes the vector with the conditional values
+for (i in seq_along(grades)) {
+    if (grades[i] > 90) {
+        grade_tags[i] <- "Excellent"
+    } else if (grades[i] >= 80) {
+        grade_tags[i] <- "Good"
+    } else {
+        grade_tags[i] <- "Fair"
+    }
+}
+
+print(grade_tags)
+```
+
+
+Write a conditional script that:
+
+1. Tags grades above 90 as "Excellent"
+2. Between 80 and 90 (inclusive) as "Good"
+3. Below 80 as "Fair"
+
+Store the result in a new vector called grade_tags. Ensure the order in grade_tags corresponds to the order of grades in the grades vector.
+
+
+### 2. For
+
+Create a sequence of numbers from 3 to 15. Using a for loop, compute the cumulative product of these numbers.
+
+```{r}
+sequence <- c()
+totalproduct <- 1
+i <- 1
+for(val in 3:15) {
+    sequence[i] <- val
+    totalproduct <- totalproduct * sequence[i]
+    i <- i + 1
+}
+print(totalproduct)
+```
+### 3. While
+
+Starting with a number 50, decrease it by 5% in every iteration using a while loop. Continue the iterations until the number goes below 20. Return the number of iterations it took.
+
+```{r}
+iteration <- 0
+count <- 50
+while(count > 20) {
+    count <- count * 0.95
+    iteration <- iteration + 1
+}
+print(iteration)
+```
+
+### 4. Functions with conditionals and loops
+
+Write a function named series_sum that accepts two arguments: a start value 's' and an end value 'e'. The function should sum all numbers from 's' to 'e'. However, if a number in the series is divisible by 3, it should be skipped.
+
+**Tip**: The remainder operator `%%` returns the remainder of the division of two numbers:
+ 
+ ```{r}
+total_non_three_sum <- 0
+series_sum <- function(s, e) {
+    for(val in s:e) {
+        if (val %% 3 != 0) {
+            total_non_three_sum <- total_non_three_sum + val
+        }
+    }
+    print(total_non_three_sum)
+}
+
+# Unit Tests
+series_sum(2, 5)
+series_sum(5, 2)
+
+ ```
+ 
+### 5. Recursive Functions
+
+The Lucas series is a sequence of numbers similar to the Fibonacci series but starts with 2 and 1 instead of 0 and 1. Write a recursive function lucas that computes the nth value of the Lucas series.
+ 
+```{r}
+ lucas <- function(n) {
+    if (n == 0) {
+        return(2)
+    } else if (n == 1) {
+        return(1)
+    } else {
+       return(lucas(n-2) + lucas(n-1))
+    }
+ }
+
+print(lucas(10))
+
+```

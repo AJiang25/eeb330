@@ -1,0 +1,154 @@
+---
+title: "EEB330 -- Precept 04: Grammar of Graphics"
+author: Scott Wolf
+date: Oct. 25, 2023
+output: html_document
+---
+
+Check out the cheat sheet: [Data Visualization with ggplot2: CHEAT SHEET](https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-visualization-2.1.pdf)
+
+> **Reminder** If you have not installed pak, do so now.  You can install it from CRAN with `install.packages("pak")` Once installed, load it with `library(pak)`.
+
+```{r, echo = T, message=F, results = "hide"}
+library(pak)
+packages <- c("ggplot2", "cowplot", "ggthemes", "patchwork")
+pak::pkg_install(packages)
+
+lapply(packages, require, character.only = TRUE)
+```
+
+## Exercises
+
+
+### Exercise 1 -- Bar Plot Modification
+
+- **Task:**
+   * Add a title to the plot: "Distribution of Cars by Class".
+   * Change the x-axis label to "Type of Car".
+   * Color the bars in blue.
+   * Rotate the x-axis labels by 45 degrees.
+- **Expected Output:** An updated plot with the above specifications.
+
+Initial Plot: A simple bar plot displaying the number of cars for each class in the mpg dataset.
+```{r}
+ggplot(data = mpg, aes(x = class)) + 
+   geom_bar()
+```
+
+```{r}
+ggplot(data = mpg, aes(x = class)) + 
+   geom_bar(fill = "blue") + 
+   labs(
+      title = "Distribution of Cars by Class", 
+      x = "Type of Car"
+   ) + 
+   theme(axis.text.x = element_text(angle = 45))
+```
+
+
+### Exercise 2 -- Histogram Modification
+
+- **Task:** 
+  * Add a title to the plot: "Highway Mileage Distribution".
+  * Change the x-axis label to "Miles Per Gallon".
+  * Fill the histogram bars with green but have a black border.
+  * Set the bin width to 2.
+- **Expected Output:** An updated plot with the above specifications.
+
+Initial Plot: A histogram showcasing the distribution of highway miles per gallon (hwy) from the mpg dataset.
+```{r}
+ggplot(data = mpg, aes(x = hwy)) +
+   geom_histogram()
+```
+
+```{r}
+ggplot(data = mpg, aes(x = hwy)) +
+   geom_histogram(fill = "green", color = "black", binwidth = 2) +
+   labs(
+      title = "Highway Mileage Distribution",
+      x = "Miles Per Gallon"
+   )
+```
+
+
+### Exercise 3 -- Scatter Plot with Facets
+
+- **Task:**
+   * Add a title: "Engine Displacement vs. Highway MPG".
+   * Change the x-axis label to "Engine Size (liters)" and y-axis label to "Highway MPG".
+   * Color the points by class and shape them by the type of drive (e.g., 4wd, fwd, rwd).
+   * Add a smooth trend line (with standard error) to the plot. Consider adjusting the alpha of the points for clarity.
+   * Facet the plot by cyl (number of cylinders) in a 2x2 grid format.
+- **Expected Output:** An updated plot with the above specifications.
+
+Initial Plot: A scatter plot illustrating the relationship between engine displacement (displ) and highway MPG (hwy).
+```{r}
+ggplot(data = mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+```
+
+```{r}
+ggplot(data = mpg, aes(x = displ, y = hwy, color = class, shape = drv)) +
+  geom_point() +
+  labs(
+      title = "Engine Displacement vs. Highway MPG",
+      x = "Engine Size (liters)",
+      y = "Highway MPG"
+   ) +
+   geom_smooth(method = "lm", aes(x = displ, y = hwy)) + 
+   facet_wrap(vars(cyl))
+
+```
+
+
+### Exercise 4: Enhanced Boxplots using after_stat() and patchwork
+
+- **Task:** 
+1. Modify plot1:
+   * Color the boxes based on after_stat(y) (median value of cty) using a gradient from light blue (low mpg) to dark blue (high mpg).
+   * Add a title: "City MPG by Manufacturer".
+   * Rotate x-axis labels by 90 degrees and adjust their size for readability.
+   * Apply a theme of your choice from ggthemes.
+2. Modify plot2:
+   * Color the boxes based on after_stat(y) (median value of hwy) using a gradient from light green (low mpg) to dark green (high mpg).
+   * Add a title: "Highway MPG by Manufacturer".
+   * Rotate x-axis labels by 90 degrees and adjust their size for readability.
+   * Apply the same theme as plot1.
+3. Combine the two modified plots side by side using patchwork.
+- **Expected Output:** An plot with the above specifications.
+```{r}
+plot1 <- ggplot(data = mpg, aes(x = manufacturer, y = cty)) +
+  geom_boxplot()
+
+plot2 <- ggplot(data = mpg, aes(x = manufacturer, y = hwy)) +
+  geom_boxplot()
+```
+
+```{r}
+plot1 <- ggplot(data = mpg, 
+   aes(
+      x = manufacturer, 
+      y = cty, 
+      fill = after_stat(middle), 
+      )) +
+   scale_fill_gradient(low = "lightblue", high = "darkblue") +
+   geom_boxplot() +
+   labs(title = "City MPG by Manufacturer") +
+   theme_tufte(base_size = 15) +
+   theme(axis.text.x = element_text(angle = 90, size = 13))
+
+   
+plot2 <- ggplot(data = mpg, 
+   aes(
+      x = manufacturer, 
+      y = hwy, 
+      fill = after_stat(middle)
+      )) + 
+   scale_fill_gradient(low = "lightGreen", high = "darkgreen") +
+   geom_boxplot() +
+   labs(title = "Highway MPG by Manufacturer") +
+   theme_tufte(base_size = 15) +
+   theme(axis.text.x = element_text(angle = 90, size = 13))
+
+plot1 + plot2
+```

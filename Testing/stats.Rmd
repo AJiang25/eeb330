@@ -1,0 +1,68 @@
+```{r}
+# Simulate some continuous x and y and 
+# fit a linear model
+x <- rnorm(100)
+y <- 1 + 2*x + rnorm(100)
+# Fit model
+m1 = lm(y ~ x)
+summary(m1)
+library(ggplot2)
+ggplot(data.frame(x, y), aes(x, y)) + 
+    geom_point() + 
+    geom_smooth(method = "lm")
+```
+
+```{r}
+# Example data
+savana <- c(120, 107, 110, 116, 114, 111, 113, 117, 114, 112)
+forest <- c(110, 111, 107, 108, 110, 105, 107, 106, 111, 111)
+sapling_height <- c(savana, forest)
+location <- factor(rep(c("savana", "forest"), 
+                   each=10))
+sap_data = data.frame(height = sapling_height, 
+                      location = location)
+head(sap_data)
+```
+
+```{r}
+library(tidyverse)
+# Calculate the observed difference in means
+obs_diff <- sap_data %>% 
+  group_by(location) %>%
+  summarise(m = mean(height)) %>%
+  summarise(diff = diff(m)) %>%
+  pull(diff)
+obs_diff
+```
+
+```{r}
+# Randomly permute the data
+# Calculate the permuted difference in means
+sap_data %>% 
+  mutate(location_perm = 
+          sample(sap_data$location)) %>%
+  group_by(location_perm) %>%
+  summarise(m = mean(height)) %>%
+  summarise(diff = diff(m)) %>%
+  pull(diff)
+```
+
+```{r}
+# Repeat steps 3 and 4 many times
+perm_diffs <- map_dbl(1:1000, 
+    function(x)
+      sap_data %>% 
+        mutate(location_perm = 
+                sample(sap_data$location)) %>%
+        group_by(location_perm) %>%
+        summarise(m = mean(height)) %>%
+        summarise(diff = diff(m)) %>%
+        pull(diff))
+summary(perm_diffs)
+```
+
+```{r}
+# Fit model
+m2 = lm(height ~ location, data = sap_data)
+summary(m2)
+```

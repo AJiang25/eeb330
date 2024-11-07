@@ -1,0 +1,252 @@
+---
+title: "EEB330 -- Precept 02: Data IO and String Wrangling with Regex in R"
+author: Scott Wolf
+date: Sept. 27th, 2023
+output: html_document
+---
+
+## [Precept 3 -- GitHub Classroom Assignment](https://classroom.github.com/a/Jo_ERa0t)
+
+# Introduction
+
+In this document, we will explore two significant aspects of data analysis in R: Data Input/Output (IO) and String Wrangling with Regular Expressions (Regex). Data IO is fundamental as it’s the first step in the data analysis pipeline, where we read or load data into R from various sources. String wrangling, particularly using Regex, is vital when we are dealing with text data and need to extract, replace, or modify strings based on specific patterns.
+
+# Data IO in R
+
+Data in R can be read from various sources such as CSV files, Excel files, or databases. Below are some ways to read data into R.
+
+## Using `read.csv` from Base R
+
+```{r, eval=FALSE}
+# Reading a CSV file using read.csv from base R
+data_base_r <- read.csv("places_in_princeton.csv")
+
+# Inspecting the first few rows of the data
+head(data_base_r)
+```
+
+## Using `read_csv` from `readr`
+
+```{r, eval=FALSE}
+pak::pkg_install("readr")
+library(readr)
+
+# Reading a CSV file using read_csv from readr package
+data_readr <- read_csv("places_in_princeton.csv")
+
+# Inspecting the first few rows of the data
+head(data_readr)
+write_delim(data_readr, "places_in_princeton.tsv", delim = "\t")
+```
+
+# String Wrangling in R
+
+## A Quick Regex Guide
+
+Regular Expressions (Regex) are a powerful tool to match and manipulate text. Here is a brief guide on some of the basic regex symbols and patterns with examples:
+
+- `\\d`: Matches any digit.
+  - Example: `"\\d"` will match any single digit like `5` in `"Price: $5"`.
+- `\\w`: Matches any word character (alphanumeric + underscore).
+  - Example: `"\\w"` will match any single word character like `a` in `"apple"`.
+- `\\b`: Word boundary.
+  - Example: `"\\bword\\b"` will match the word `"word"` but not `"swordfish"`.
+- `+`: Matches one or more of the preceding character or group.
+  - Example: `"\\d+"` will match one or more digits like `123` in `"123 apples"`.
+- `*`: Matches zero or more of the preceding character or group.
+  - Example: `"a*"` will match any number of consecutive `a`'s, including none, as in `"baaa!"`.
+- `(?:)`: Non-capturing group.
+  - Example: `"\\d(?:\\.\\d)?"` will match `1` or `1.5` but not `.5`.
+- `^`: Start of a line.
+  - Example: `"^Start"` will match any line that begins with the word `"Start"`.
+- `$`: End of a line.
+  - Example: `"end$"` will match any line that ends with the word `"end"`.
+- `[]`: Defines a character class.
+  - Example: `"[aeiou]"` will match any vowel in `"apple"`.
+- `|`: Acts as an OR operator.
+  - Example: `"apple|orange"` will match either `"apple"` or `"orange"` in a given text.
+- `\\s`: Matches any whitespace character.
+  - Example: `"\\s"` will match the space in `"apple orange"`.
+- `{n}`: Matches exactly `n` occurrences of the preceding character or group.
+  - Example: `"\\d{3}"` will match `123` in `"12345"`.
+- `{n,}`: Matches `n` or more occurrences of the preceding character or group.
+  - Example: `"\\d{2,}"` will match `123` in `"12345"`, but not `1`.
+- `{n,m}`: Matches between `n` and `m` occurrences of the preceding character or group.
+  - Example: `"\\d{2,4}"` will match `123` and `12` in `"12345"`.
+
+By understanding and combining these patterns, you can create complex expressions to match a wide range of strings within your text data.
+
+## Installing and loading the stringr package
+
+```{r, eval=FALSE}
+pak::pkg_install("stringr")
+library(stringr)
+```
+
+## stringr examples
+
+
+Extracting digits from strings can be crucial to isolate specific numerical information such as prices or zip codes.
+```{r, eval=FALSE}
+strings <- c("123 Main St", "Price: $200 0")
+digits <- str_extract_all(strings, "\\b\\d+\\b")
+```
+
+## tidyr examples
+
+Exampled pulled from: [https://r4ds.hadley.nz/regexps#sec-extract-variables](https://r4ds.hadley.nz/regexps#sec-extract-variables)
+
+```{r, eval=FALSE}
+pak::pkg_install("tidyr")
+library(tidyr)
+```
+
+```{r, eval=FALSE}
+df <- tribble(
+  ~str,
+  "<Sheryl>-F_34",
+  "<Kisha>-F_45",
+  "<Brandon>-N_33",
+  "<Sharon>-F_38",
+  "<Penny>-F_58",
+  "<Justin>-M_41",
+  "<Patricia>-F_84",
+)
+```
+
+```{r, eval=FALSE}
+df |>
+  separate_wider_regex(
+    str,
+    patterns = c(
+      "<", # Match the literal character '<'.
+      name = "[A-Za-z]+", # Match one or more alphabets (upper or lower case)
+      and create a new column 'name' with the matched value.
+      ">-", # Match the literal string '>-'.
+      gender = ".", # Match any single character (except newline) and
+      create a new column 'gender' with the matched value.
+      "_", # Match the literal character '_'.
+      age = "[0-9]+" # Match one or more digits and create a new column
+      'age' with the matched value.
+    )
+  )
+```
+
+# Exercises
+
+## Exercise 1: Reading TSV Files
+
+A TSV file, `places_in_princeton.tsv`, uses a tab character as a delimiter between values. Your task is to read this file into R using an appropriate reading function.
+
+```{r}
+
+my_data <- read_tsv("places_in_princeton.tsv")
+head(my_data)
+
+```
+    
+## Exercise 2. Regex to English
+
+Explain what this regex patters does: "\\d+[-]\\d+[-]\\d+\\s" in words. What is an example of something it matches?
+
+Matches one or more digits, then matches a hyphen, matches one or more digits, 
+then matches a hyphen, matches one or more digits, and matches any whitespace.
+
+For example, this will match "123-123-123 " in "123-123-123 ABC"
+
+## Exercise 3: Extracting the parts of an address
+
+With the address column from the data from Exercise 1, we can extract ZIP codes as follows:
+
+```{r, eval=FALSE}
+zip_codes <- str_extract(data_tsv_readr$address, "\\b\\d{5}(?:-\\d{4})?\\b")
+```
+
+Now, extract the street address from the address string and 
+search each comment for the word "Famous" to determine which locations are famous in Princeton. 
+Follow this up by searching for "historic" 
+Make sure that your search is case-insensitive and captures when historic is a substring as well, like "historical".
+
+```{r, eval=FALSE}
+
+streetnumber <- str_extract(my_data$address, "^[^,]+")
+streetnumber
+
+famous <- str_extract(my_data$comment, "[Ff]amous\\s")
+famous
+
+historic <- str_extract(my_data$comment,"[hH]istoric[\\w]*\\b")
+historic
+```
+
+## Exercise 4: More string extraction
+* Identify locations with a number in their names and extract that number.
+* Extract all words starting with 'a' or 'A' from the comment column.
+
+```{r, eval=FALSE}
+streetnumber <- str_extract(my_data$address, "^\\d+")
+streetnumber
+
+awords <- str_match_all(my_data$comment,
+"\\s[Aa][\\w]*\\b|^[Aa][\\w]*\\b")
+awords
+```
+
+## Exercise 5: Baby names
+
+```{r, eval=FALSE}
+pak::pkg_install("babynames")
+library(babynames)
+```
+
+To view baby names,
+```{r, eval=FALSE}
+head(babynames)
+```
+
+* What baby name has the most vowels? What name has the highest proportion of vowels? (Hint: what is the denominator?)
+
+```{r, eval=FALSE}
+
+name <- babynames |>
+    count(name) |>
+        mutate(
+          vowels = str_count(name, "[aeiouAEIOU]"),
+          consonants = str_count(name, "[^aeiouAEIOU]")
+        )
+
+#most vowels
+print(name[name$vowels == max(name$vowels),])
+
+#highest proportion of vowels
+print(name[(name$vowels/(name$vowels+name$consonants)) 
+== max(name$vowels/(name$vowels+name$consonants)),])
+```
+
+Most vowels: Mariadelrosario & Mariaguadalupe have 8 vowels each
+Highest proportion: Ai, Aia, Aoi, Ea, Eua, Ia, Ii, Io,...
+
+## Exercise 6: Extracting month, day, year from the date_strings defined below:
+
+```{r, eval=FALSE}
+pak::pkg_install("nycflights13")
+library(nycflights13)
+```
+
+```{r, eval=FALSE}
+date_strings <- paste(flights$year, flights$month, flights$day, sep = "-")
+date_strings
+
+data.frame(date_strings) |>
+  separate_wider_regex(
+    date_strings,
+    patterns = c(
+      year = "^\\d+", # Matches the years
+      "-",
+      months = "\\d+", # Matches the months
+      "-",
+      day = "\\d+" # Matches the days
+    )
+)
+df
+```

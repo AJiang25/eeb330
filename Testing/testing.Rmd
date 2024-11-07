@@ -1,0 +1,4 @@
+```{r}
+string_vec = c("a", "ab", "abb", "ac", "ba", "cba", "abbbb")
+str_view(string_vec, "ab*")
+```

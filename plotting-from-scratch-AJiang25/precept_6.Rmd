@@ -1,0 +1,111 @@
+---
+title: "EEB330 -- Precept 05: Plotting from Scratch"
+author: Scott Wolf
+date: Nov. 1, 2023
+output: html_document
+---
+
+## Exercises
+
+```{r setup, include=FALSE}
+# Load the required libraries -- you may need to install them.
+library(ggplot2)
+library(wesanderson)
+library(viridis)
+library(ggthemes)
+library(hexbin)
+```
+
+###  Exercise 1 -- Facetted Scatterplot
+- **Dataset:** `mtcars`
+- **Task:**
+    * Replicate the plot below.
+
+- **Hints:**
+    * Use Wes Anderson's "Zissou1" color palette for points.
+    * Use `theme_bw()`
+
+![Facetted Scatterplot](exercise_1_scatterplot_facetted_by_cylinders.png)
+
+```{r}
+# YOUR CODE HERE
+ggplot(mtcars, aes(hp, mpg, color = factor(cyl))) +
+    geom_point() +
+    labs(
+        x = "Horsepower", 
+        y = "Miles per gallon", 
+        title = "Miles per Gallon vs Horsepower, Facetted by Cylinders",
+        color = "Cylinder"
+    ) +
+    facet_wrap(~ cyl) +
+    theme_bw() +
+    scale_color_manual(values = wes_palette("Zissou1"))
+```
+
+
+###  Exercise 2 -- Cleveland Dot Plot
+- **Dataset:** `ToothGrowth`
+- **Task:**
+    * Replicate the plot below.
+
+- **Hints:**
+    * Use Wes Anderson's "Darjeeling2" color palette for points.
+    * Use `theme_tufte()`
+
+![Cleveland Dot Plot](exercise_2_cleveland_dot_plot.png)
+
+```{r}
+# YOUR CODE HERE
+ggplot(ToothGrowth, aes(x = len, y = factor(dose), color = factor(supp))) +
+    geom_point() +
+    labs(
+        x = "Tooth Length (mm)", 
+        y = "Dosage (mg)", 
+        title = "Effect of Dosage and Supplements on Tooth Decay",
+        color = "Supplement"
+    ) +
+    theme_tufte() +
+    scale_color_manual(values = wes_palette("Darjeeling2"))
+```
+
+
+###  Exercise 3 -- Hexbin Plot with Custom Font and Annotations
+
+- **Dataset:** Generated in example code below.
+- **Task:**
+    * Replicate the plot below.
+
+- **Hints:**
+    * Use the "magma" color map from viridis.
+    * Use `theme_light()`
+    * Use `annotate()` to add text and arrows to the plot.
+    * `bins = 100`
+
+![Hexbin Plot](exercise_3_hexbin_plot.png)
+
+```{r}
+a <- data.frame(x = rnorm(20000, 10, 1), y = rnorm(20000, 10, 1))
+b <- data.frame(x = rnorm(20000, 14.5, 1.9), y = rnorm(20000, 14.5, 1.9))
+c <- data.frame(x = rnorm(20000, 9.5, 1.9), y = rnorm(20000, 15.5, 1.9))
+data <- rbind(a, b, c)
+```
+
+```{r}
+# YOUR CODE HERE
+ggplot(data, aes(x=x, y=y) ) +
+  geom_hex(bins = 100) +
+  scale_fill_viridis(option = "magma", trans = "sqrt") +
+  labs(title = "Hexbin Plot") +
+  theme_light(base_family = "comic sans ms") + 
+  annotate("segment", 
+             x = 6, xend = 10, 
+             y = 6, yend = 10,
+             arrow = arrow(type = "closed", ends = "last", 
+                      length = unit(.6,"cm"))) +
+  annotate("text", 
+  x=6, y=9, 
+  label = "High Density", 
+  size = 10, 
+  color = "Red",
+  fontface = "bold")
+```

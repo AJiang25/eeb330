@@ -1,0 +1,10 @@
+```{r}
+library(tidyverse)
+relig_income
+
+pivot_longer(relig_income, 
+    -religion,
+    names_to = "income_bracket",
+    values_to = "value"
+)
+```

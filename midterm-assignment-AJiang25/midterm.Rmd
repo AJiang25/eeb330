@@ -1,0 +1,333 @@
+1. **Data Parsing and Aggregation:**
+    * Read the contaminant and ecological community data from the CSV files.
+    * Parse the data, ensuring that any inconsistencies, missing values, or anomalies are handled.
+    * Aggregate data so that it can be efficiently analyzed. This might involve merging data by date and location, calculating averages, or creating summarized tables.
+
+2. **Calculation of Diversity Indexes:**
+    * For each ecological community data set, calculate a diversity index (e.g., Shannon index, Simpson’s diversity index) over time.
+    * Visualize the diversity indexes on a timeline for each location.
+
+3. **Relate Contaminant Data to Diversity Indexes:**
+    * Analyze the relationship between contaminant levels and the diversity indexes. 
+    * Look for correlations, trends, or patterns that might suggest that certain contaminants have significant impacts on ecological diversity.
+
+1. Start by creating a function to read and organize the 
+contaminants data. your function should receive as an argument 
+the a path to a directory containing the contamination data. 
+It should then read these files (the `dir()` function can help 
+to find the correct files) and merge them into a single data.frame. 
+The function should return a data.frame with the following columns: 
+`Date`, `Mercury`, `Lead`, and `Location`.
+
+```{r}
+library(tidyverse)
+
+# Function that takes in a directory path and returns a data frame 
+# containing all information in the csv files in that path
+# more specifically using date, mercury, lead, and location as the 
+# headers
+
+all_contaminants_df <- function(directory_path) {
+    # Stores the files in a list
+    files <- dir(directory_path, pattern = ".*csv", full.names = TRUE)
+
+    # Creates an empty Data Frame
+    contaminants_df <- data.frame(
+        Date = character(),
+        Mercury = numeric(),
+        Lead = numeric(),
+        Location = numeric()
+    )
+
+    # Reads the files
+    for (file in files) {
+        df <- read.csv(file) 
+        # Appends the information in each file into the df
+        contaminants_df <- rbind(contaminants_df, df)
+    }
+    return(contaminants_df)
+}
+
+# Relative Path since the files are contained within the same folder
+directory_path <- "contaminants"
+contaminants <- all_contaminants_df(directory_path)
+contaminants
+
+```
+
+Alternative:
+```{r}
+library(tidyverse)
+
+path <- "contaminants"
+readData <- function(path) {
+    read_csv(dir(path, full.names = TRUE))
+}
+readData(path)
+
+```
+
+
+2. With all the contaminants data in a single data.frame, 
+**summarize** this data set by calculating the average concentration 
+per month (That is, the average in 2010-01, 2010-02, ...) 
+for each of the two contaminants.
+
+```{r}
+library(stringr)
+
+# Generates a new column called months using REGEX to extract dates
+contaminants$Month <- format(as.Date(contaminants$Date, format = "%Y-%m-%d"), "%Y-%m")
+
+# Generates a new data frame containing the average mercy and 
+# lead concentrations 
+avg_monthly_concentration <- contaminants %>% 
+    group_by(Month, Location) %>% 
+    summarise(
+        avg_mercury_concentration = mean(Mercury, na.rm = TRUE),
+        avg_lead_concentration = mean(Lead, na.rm = TRUE)
+    )
+
+avg_monthly_concentration
+
+```
+
+3. Load the species count data into R, wrangle it however 
+you see fit, there are several possibilities. You may use the data 
+in the format it is in or modify it using the tidy data principles. 
+
+```{r}
+library(readr)
+
+# Regular Table with an additional column called total 
+# containing the observation total 
+species <- read.table("species_counts.csv", header = TRUE, sep = ",")
+species
+
+```
+
+# 4. Next, modify the `Simpson()` and `Shannon()` diversity index 
+# functions we built in class to handle the data in the format you 
+# created in the previous step. Calculate the diversity index for 
+# each observation of the two communities.
+
+```{r}
+getProb = function(x, na.rm = FALSE) {
+    x/sum(x, na.rm = TRUE)
+}
+
+Simpson <- function(x, na.rm = FALSE){
+  p = getProb(x)
+  D = sum(p^2, na.rm = TRUE)
+  return(c(Simpson = D))
+}
+
+Shannon <- function(x, na.rm = FALSE){
+  p = getProb(x)
+  H = -sum(p*log(p), na.rm = TRUE)
+  return(c(Shannon = H))
+}
+
+diversity <- subset(species[,1:2]) %>% 
+    mutate(Simpson = apply(species[,3:12], 1, Simpson)) %>% 
+    mutate(Shannon = apply(species[,3:12], 1, Shannon))
+diversity
+
+```
+
+5. Finally, join the two datasets (diversity measures and 
+average contaminants) into a single data.frame.  
+(Hint: use one of the join functions)
+```{r}
+combined <- left_join(diversity, avg_monthly_concentration, by = c("Month", "Location")) %>%
+    arrange(Month, Location)
+combined
+
+```
+
+6. Using this combined data set make plots, measure correlations, 
+and look for patterns. For example: 
+How do the contaminants behave in both locations? 
+How does diversity change across time and locations? 
+Are the two related? 
+(Hint: see the first precept for a simple scatter plot code, 
+and see the `cor()` function)
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+Month <- combined$Month
+Simpson_Indexes <- combined$Simpson
+Shannon_Indexes <- combined$Shannon
+Location <- combined$Location
+Lead <- combined$avg_lead_concentration
+Mercury <- combined$avg_mercury_concentration
+
+
+# 2 plots: ggplot & barplot representing Simpson Index vs Time (Months)
+# ggplot separated by location
+simpson_ggplot <- ggplot(
+    data = combined, 
+        aes(
+            x = Month, 
+            y = Simpson,
+            fill = Location
+        )
+    ) + geom_col(width = 0.5) +
+    theme(axis.text.x = element_text(angle = 90))
+
+# barplot representing Simpson Index vs Time
+barplot(combined$Simpson,
+    names.arg = combined$Month,
+    xlab = "Month", ylab = "Simpson",
+    main = "Bar Plot of Month vs. Simpson",
+    col=rgb(0.2,0.4,0.6,0.6),
+)   
+
+# A scatterplot representing the Simpson indexes, but separated
+# by location, (wasn't able to draw a trend line) 
+simpson_scatter <- ggplot(
+    data = combined, 
+        aes(
+            x = Month, 
+            y = Simpson,
+            fill = Location
+        )
+    ) + theme(axis.text.x = element_text(angle = 90)) +
+    geom_point(aes(colour=Location)) + 
+    geom_smooth(method = "lm", formula = y ~ x) +
+    facet_wrap(~ Location, ncol = 1)
+simpson_scatter
+
+# 2 plots: ggplot & barplot representing Shannon Index vs Time (Months)
+# ggplot separates by location
+shannon_ggplot <- ggplot(
+    data = combined, 
+        aes(
+            x = Month, 
+            y = Shannon,
+            fill = Location
+        )
+    ) + geom_col(width = 0.5) +
+    theme(axis.text.x = element_text(angle = 90))
+
+# barplot representing Simpson Index vs Time
+barplot(combined$Shannon,
+    names.arg = combined$Month,
+    xlab = "Month", ylab = "Shannon",
+    main = "Bar Plot of Month vs. Shannon",
+    col=rgb(0.2,0.4,0.6,0.6),
+)  
+
+# A scatterplot representing the shannon indexes, but separated
+# by location, (wasn't able to draw a trend line)
+shannon_scatter <- ggplot(
+    data = combined, 
+        aes(
+            x = Month, 
+            y = Shannon,
+            fill = Location
+        )
+    ) + theme(axis.text.x = element_text(angle = 90)) +
+    geom_point(aes(colour=Location)) + 
+    facet_wrap(~ Location, ncol = 1)
+shannon_scatter
+
+
+# Analyzing contaminants by Location
+# A scatterplot representing the lead concentrations 
+# in each location over time
+lead <- ggplot(
+    data = combined, 
+        aes(
+            x = Month,
+            y = Lead,
+            fill = Location
+        )
+    ) + theme(axis.text.x = element_text(angle = 90)) +
+    geom_point(aes(colour=Location)) + 
+    facet_wrap(~ Location, ncol = 1)
+
+# A scatterplot representing the lead concentrations 
+# in each location over time
+mercury <- ggplot(
+    data = combined, 
+        aes(
+            x = Month,
+            y = Mercury,
+            fill = Location
+        )
+    ) + theme(axis.text.x = element_text(angle = 90)) +
+    geom_point(aes(colour=Location)) + 
+    facet_wrap(~ Location, ncol = 1)
+
+```
+# Measure Correlations
+```{r}
+
+correlations <- data.frame(Location = character(),
+                           Simpson = numeric(),
+                           Shannon = numeric(),
+                           Lead = numeric(),
+                           Mercury = numeric())
+
+# For River location
+river_data <- subset(combined, Location == "River")
+simpson_cor_river <- cor(river_data$Simpson, c(1:30))
+shannon_cor_river <- cor(river_data$Shannon, c(1:30))
+lead_cor_river <- cor(river_data$avg_lead_concentration, c(1:30))
+mercury_cor_river <- cor(river_data$avg_mercury_concentration, c(1:30))
+
+correlations <- rbind(correlations, 
+    data.frame(
+        Location = "River",
+        Simpson = simpson_cor_river,
+        Shannon = shannon_cor_river,
+        Lead = lead_cor_river,
+        Mercury = mercury_cor_river
+        )
+    )
+
+# For Lake location
+lake_data <- subset(combined, Location == "Lake")
+simpson_cor_lake <- cor(lake_data$Simpson, c(1:30))
+shannon_cor_lake <- cor(lake_data$Shannon, c(1:30))
+lead_cor_lake <- cor(lake_data$avg_lead_concentration, c(1:30))
+mercury_cor_lake <- cor(lake_data$avg_mercury_concentration, c(1:30))
+
+correlations <- rbind(correlations, 
+    data.frame(
+        Location = "Lake",
+        Simpson = simpson_cor_lake,
+        Shannon = shannon_cor_lake,
+        Lead = lead_cor_lake,
+        Mercury = mercury_cor_lake
+        )
+    )
+
+correlations
+
+```
+Observations of patterns
+
+7. Write a single paragraph that summarizes your conclusions.
+
+Conclusions:
+Based on the graphs and correlations, it seems that both
+mercury and lead concentrations in each location have a
+positive correlation over time, meaning that their average 
+monthly concentrations are increasing in each location. 
+With respect to this, the simpson diversity index has 
+a positive correlation with respect to time with the lake location
+having a much higher correlation than that of the river location.
+From the graphs, we can see that the Simpson indexes increase over
+time meaning that the probability that two individuals sampled from 
+the same population will be from the same species is higher.
+The Shannon indexes hold a negative correlation and the scatterplots
+show that the indexes decrease over time. This indicates that 
+the diversity in each location in decreasing. The likely
+conclusion from this data is that as the mercury and lead
+concentrations increase in each community over time is correlated
+with the diversity of the species in each community decrease 
+over time

@@ -1,0 +1,34 @@
+# ----- Loading and Exploring the iris dataset -----
+
+# Load the dataset -- note that this is a built-in dataset in R
+data(iris)
+
+# View the first few rows to understand its structure
+head(iris)
+
+# Check the detailed structure of the dataset for more information on its columns
+str(iris)
+
+# Generate summary statistics to get a sense of the data distribution
+summary(iris)
+
+# ----- Data Visualization -----
+
+# Scatter plot visualizing the relationship between Sepal measurements
+plot(iris$Sepal.Length, iris$Sepal.Width, main="Sepal Length vs Sepal Width", 
+     xlab="Sepal Length", ylab="Sepal Width", col=iris$Species, pch=16, cex=1.3)
+legend("topright", legend=levels(iris$Species), col=1:3, pch=16)
+
+# Scatter plot visualizing the relationship between Petal measurements
+plot(iris$Petal.Length, iris$Petal.Width, main="Petal Length vs Petal Width", 
+     xlab="Petal Length", ylab="Petal Width", col=iris$Species, pch=16, cex=1.3)
+legend("topright", legend=levels(iris$Species), col=1:3, pch=16)
+
+# ----- Modifying the Dataset -----
+
+# Add a new column 'Petal.Length.Class' that classifies flowers based on petal length
+iris$Petal.Length.Class <- ifelse(iris$Petal.Length < 2, "Short", 
+                           ifelse(iris$Petal.Length < 5, "Medium", "Long"))
+
+# View the initial rows of the modified dataset to see the added column
+head(iris)

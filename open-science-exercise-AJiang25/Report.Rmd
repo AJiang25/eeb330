@@ -1,0 +1,64 @@
+5. Write a brief report describing your replication process and the results you obtained.
+
+# Replication Process
+Figure 2 in the paper "Natural Recovery of Corals after Severe Disturbance" 
+by Juliano Morais, Sterling B. Tebbett, Renato A. Morais, David R. Bellwood
+was replicated using the data provided by the authors. The data was downloaded and
+put into the same folder as the R script file and the ggplot2 and ggpubr libraries were
+loaded in.
+
+First, the data from Data_Fig2_Cover_Diff.csv, Data_Fig2a.csv, Data_Fig2b.csv were
+read in using the read.csv() and stored as data frames: data2cover, data2a, data2b,
+respectively.
+
+Next, the code for the plot for Figure 2A was created using the ggplot() function.
+The plot included a ribbon representing the range of values, a line representing the
+mean, and points representing additional data from the "Data_Fig2cover.csv" file. 
+The x and y axes were relabeled as the density of recruits (recruits/m^2) and
+increase in % cover over 24 months, respectively. The axes were also fitted 
+to have the exact same breaks as the original plot using the scale_x_continuous()
+and scale_y_continuous() functions. The plot also included horizontal and vertical 
+dashed lines that were plotted using the geom_hline and geom_segment functions as 
+well as annotations for mR^2 and cR^2 values that were plotted using the annotate() 
+function. The theme classic was applied for its white background and an aspect ratio 
+of 1.0 was applied. 
+
+The code for the plot for Figure 2B resembles much of the code for Figure 2A. 
+The plot was created using the ggplot() function and included two ribbons: each 
+grouped by density category. The plot also included a line representing the mean. 
+The x and y axes were relabeled as the months and coral cover (%), respectively. 
+The plot also included a horizontal line indicating the global average coral cover.
+To apply the appropriate colors to the ribbons and line, the fill order was reversed
+using the rev() function and the legend was also reversed using the guides() function.
+The legend labels were also renamed using the scale_color_discrete and scale_fill_discrete
+functions. The scale_x_continuous and scale_y_continuous functions were applied to 
+fit the axes to the exact same breaks as the original plot. The theme classic was
+applied for its white background and an aspect ratio of 1.0 was applied. Within the theme
+function, the legend was repositioned using the legend.position argument to fit 
+the legend onto the top left corner of the plot. Finally, the plot was annotated 
+with the text: "Global average coral cover" using the annotate() function. 
+
+Using the ggarrange function from the ggpubr library, the two plots were combined
+with two columns and the subtitles "(a)" and "(b)" were added to the plots using
+the labels argument and adjusted using the hjust argument.
+
+# Results
+The result was a similar Figure 2 as shown in the paper. The font size, font, colors,
+and exact themees that were applied were largely unknown and therefore, were not able
+to use an exact match. However, applying a color search tool to the original plot 
+allowed for the colors to be matched as closely as possible. The aspect ratio was also
+largely unknown and was therefore, adjusted to 1.0. The exact same breaks were applied.
+The same labels were also applied. The legend was also repositioned as best as possible
+as well as the annotations for the plots. However, the data remains relatively intact. 
+
+2 warnings were generated: 
+1 & 2: the is.na() applied to non-(list or vector) of type 'expression'
+The usage of expression() function was necessary to obtain the correct exponent, and 
+did not interfere with the data. 
+
+
+# Improvements & Suggestions
+In figure 2a, the points near (0, 0) are mostly jumbled together and 
+it would likely be better to plot them using the jitter() function to 
+find distinctions between the points. It may also be add a title to the plots
+as that would provide a additional information to the reader. 

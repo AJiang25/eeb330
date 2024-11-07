@@ -1,0 +1,237 @@
+---
+title: "EEB330 -- Precept 03: Data Wrangling"
+author: Scott Wolf
+date: Oct. 4, 2023
+output: html_document
+---
+
+Check out the cheat sheet mentioned in lecture: [Data Wrangling with dplyr and tidyr: Cheat Sheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)
+
+> **Reminder** If you have not installed pak, do so now.  You can install it from CRAN with `install.packages("pak")` Once installed, load it with `library(pak)`.
+
+# Data Wrangling with R
+
+
+Examples from [Tidy data example](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
+```{r, message = FALSE}
+library(pak)
+pak::pkg_install("tidyverse")
+library(tidyverse)
+library(nycflights13)
+```
+
+```{r, message = FALSE}
+# Visualizing the structure of the data to understand it better
+head(billboard)
+```
+
+## Tidying data
+
+In this step, the `pivot_longer` function is employed to transform the `billboard` dataset from a wide format to a long format. 
+
+- **`names_to = "week"`**: Specifies that the names of the original set of columns (`wk1` to `wk76`) are to be stored in a new column named `week`.
+- **`values_to = "rank"`**: Signifies that the values of the original set of columns will be gathered into a new column named `rank`.
+- **`values_drop_na = TRUE`**: Ensures that any resulting rows containing `NA` in the `rank` column are omitted from the `billboard2` dataset.
+
+```{r}
+billboard2 <- billboard %>%
+  pivot_longer(
+    wk1:wk76,
+    names_to = "week",
+    values_to = "rank",
+    values_drop_na = TRUE
+  )
+
+```
+
+Next, the `mutate` function is utilized to create and modify variables within the long-format dataset created in the previous step.
+
+- **`week = as.integer(gsub("wk", "", week))`**: Converts the `week` column to integer by removing the "wk" prefix from the values in the `week` column and then coercing them to integer.
+- **`date = as.Date(date.entered) + 7 * (week - 1)`**: Calculates a new `date` column by adding the number of weeks (converted to days) to the `date.entered` column, allowing tracking of the specific date related to each week's data.
+- **`date.entered = NULL`**: Removes the original `date.entered` column after the new `date` column has been created.
+
+```{r}
+billboard3 <- billboard2 %>%
+  mutate(
+    week = as.integer(gsub("wk", "", week)),
+    # Adding to dates in R adds days!
+    date = as.Date(date.entered) + 7 * (week - 1),
+    date.entered = NULL
+  )
+
+```
+
+Finally, the `arrange` function is applied to organize the dataset based on the `artist`, `track`, and `week` columns. This operation ensures a coherent and ordered display of the dataset, making it more manageable and intuitive for subsequent analysis.
+
+```{r}
+long_billboard_sorted <- billboard3 %>% arrange(artist, track, week)
+glimpse(long_billboard_sorted)
+```
+
+
+This example code creates a new `song` data frame holding unique `artist` and `track` combinations from the `billboard3` dataframe, and assigns a unique `song_id` to each row (representing each unique song).
+```{r, message=FALSE}
+song <- billboard3 %>% 
+  distinct(artist, track) %>%
+  mutate(song_id = row_number())
+
+glimpse(song)
+```
+
+```{r, message=FALSE}
+rank <- billboard3 %>%
+  left_join(song, c("artist", "track")) %>%
+  select(song_id, date, week, rank)
+
+glimpse(rank)
+```
+
+
+## Joins
+In this section, we will join the `flights` dataset with the `weather` dataset from the `nycflights13` package to analyze how weather conditions might have affected the flights.
+
+Make sure you have installed and loaded `nycflights13`!
+```{r}
+library(nycflights13)
+```
+
+
+#### Inner Join
+In an inner join, only the rows with matching keys in both data frames are returned. Rows with non-matching keys are excluded from the result. It's useful when you want to merge datasets based on common key columns, and you are only interested in rows with matching keys in both datasets.
+
+```{r}
+flights_weather_inner_joined <- inner_join(flights, weather,by=c('year', 'month', 'day', 'hour', 'origin'))
+head(flights_weather_inner_joined)
+```
+
+
+#### Left Join
+A left join returns all rows from the left dataset and the matched rows from the right dataset. If there is no match found in the right dataset, then the result will contain `NA`. Use a left join when you want to retain all records from the 'left' dataset, and add matching records from the 'right' dataset where available.
+```{r}
+# Perform a left join between `flights` and `weather` datasets.
+flights_weather_left_joined <- left_join(flights, weather, by=c('year', 'month', 'day', 'hour', 'origin'))
+head(flights_weather_left_joined)
+```
+
+#### Right Join
+In a right join, all rows from the right dataset and the matched rows from the left dataset are returned. If there is no match found in the left dataset, then the result will contain `NA`. It is the opposite of a left join and is used when you want to retain all records from the 'right' dataset.
+```{r}
+# Perform a right join between `flights` and `weather` datasets.
+flights_weather_right_joined <- right_join(flights, weather, by=c('year', 'month', 'day', 'hour', 'origin'))
+head(flights_weather_right_joined)
+```
+
+```{r}
+# Perform a full join between `flights` and `weather` datasets.
+flights_weather_full_joined <- full_join(flights, weather, by=c('year', 'month', 'day', 'hour', 'origin'))
+head(flights_weather_full_joined)
+```
+
+
+```{r}
+average_delay_per_condition <- flights_weather_inner_joined %>%
+  group_by(precip > 0.5) %>%
+  summarise(Average_Departure_Delay = mean(dep_delay, na.rm = TRUE))
+```
+
+#### Anti Join
+An anti join returns rows from the left dataset where there are no matching keys in the right dataset. It's useful for identifying records in one dataset that do not have a counterpart in another dataset.
+```{r}
+# Perform an anti join between `flights` and `weather` datasets.
+flights_weather_anti_joined <- anti_join(flights, weather, by=c('year', 'month', 'day', 'hour', 'origin'))
+head(flights_weather_anti_joined)
+
+```
+
+## Exercises
+
+We will use the weather and flights datasets from the `nycflights13` package for the exercises.
+
+Please see the [nycflights13's documentation](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf) for more information about the datasets.
+
+```{r, message = FALSE}
+library(pak)
+pak::pkg_install(c("tidyverse", "nycflights13"))
+library(tidyverse)
+library(nycflights13)
+```
+
+### Exercise 1 -- Filtering and Summarizing
+
+- **Task:** Filter the `flights` dataset to include only flights with a delay of more than 12 hours. Group and count this output by `origin` sort the result in descending order.
+- **Expected Output:** A `data.frame` showing the number of flights delayed over 12 hours by airport, ordered from most to least.
+
+```{r}
+nycflights13
+delayed_flights <- flights %>% 
+    # filters the data by departure delays greater than 12 hours
+    filter(dep_delay > 720) %>%
+    group_by(origin) %>% # groups the flights by origin
+    count(origin) %>% # counts the number of observations
+    arrange(desc(n)) # sorts the data by descending order
+
+delayed_flights
+```
+
+
+### Exercise 2 -- Filtering and Summarizing
+
+- **Task:** Calculate the average air time and the number of flights departing from JFK and arriving at LAX in the `flights` data set. Make sure to report this result in hours.
+- **Expected Output:** A `data.frame` with a single row showing the average air time in hours and the number of flights from JFK to LAX.
+
+```{r}
+jfk_to_lax <- flights %>% 
+    filter(origin == "JFK" & dest == "LAX") %>%
+    summarise(
+      count = n(),
+      average_air_time = mean(air_time, na.rm = TRUE)/60
+    )
+
+jfk_to_lax
+```
+
+
+### Exercise 3 -- Joining
+
+- **Task:** Perform an inner join between the `airports` and `flights` data sets on the `faa` and `dest` columns, respectively. Then, report the frequency of the time zones of destinations in descending order. Additionally, find an example of an airport with a missing time zone and report the name of the airport, explaining how you checked for it.
+- **Expected Output:** 
+   1. A `data.frame` listing the time zones by frequency in descending order.
+   2. The name of at least one airport with a missing time zone and the method used to identify it.
+
+```{r}
+# data.frame that lists the time zones by frequency in descending order
+airport_flights <- inner_join(airports, flights, by = c("faa" = "dest")) %>%
+    group_by(tz) %>% 
+    count(tz) %>% 
+    arrange(desc(n))
+
+# For time zone names: tzone could be used instead
+airport_flights
+
+# Method that returns an airport with a missing time zone
+airport_flights2 <- left_join(flights, airports, by = c("dest" = "faa")) %>%
+    group_by(tz) %>% 
+    filter(is.na(tz)) %>%
+    head(1) # truncates the entries to just one airport code
+
+airport_flights2$dest
+```
+
+### Exercise 4: More Wrangling
+
+- **Task:** Identify the top 3 months with the highest average departure delays in the flights dataset. For these months, calculate and present the average, minimum, and maximum departure delay.
+- **Expected Output:** A `data.frame` showing the top 3 months along with their respective average, minimum, and maximum departure delay values.
+
+```{r}
+top_three_months <- flights %>% 
+    group_by(month) %>% 
+    summarise(
+      avg_dep_delay = mean(dep_delay, na.rm = TRUE),
+      min_dep_delay = min(dep_delay, na.rm = TRUE),
+      max_dep_delay = max(dep_delay, na.rm = TRUE)
+    ) %>% 
+    arrange(desc(avg_dep_delay)) %>% 
+    head(3)
+
+top_three_months
+```
